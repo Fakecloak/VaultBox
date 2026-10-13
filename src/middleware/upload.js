@@ -1,5 +1,6 @@
 import multer from 'multer';
 import path from 'node:path';
+import { unlink } from "node:fs/promises";
 import {randomUUID} from 'node:crypto';
 
 const uploadDir = path.resolve("uploads");
