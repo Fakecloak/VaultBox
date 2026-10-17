@@ -2,11 +2,14 @@ import { Router } from 'express';
 import upload from '../middleware/upload.js';
 import { prisma } from '../lib/prisma.js';
 import path from 'node:path';
-
+import { getFiles, downloadFile } from '../controllers/fileController.js';
 
 const uploadDir = path.resolve("uploads");
 
 const router = Router();
+
+router.get('/', getFiles);
+router.get('/:id', downloadFile);
 
 router.post('/upload', upload.single('file'), async (req,res)=>{
     try{
