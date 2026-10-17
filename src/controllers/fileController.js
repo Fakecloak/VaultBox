@@ -1,6 +1,6 @@
 import {prisma} from '../lib/prisma.js';
 import path from 'node:path';
-
+import { unlink } from 'node:fs/promises';
 
 export const getFiles = async (req, res) => {
     try{
@@ -44,3 +44,34 @@ export const downloadFile = async(req, res) => {
         return res.status(500).json({error:'failed to download file'});
     }
 } 
+
+export const deleteFile  = async(req, res) => {
+    try{
+        const fileID = req.params.id;
+
+        const file  = await prisma.file.findUnique({
+            where: {
+                id: fileID,
+            }
+        })
+
+        if(!file){
+            return res.status(404).json({error: 'file not exist'});
+        }
+
+        const filePath = path.resolve("uploads", file.storageName);
+        await unlink(filePath); //deleting the file from the uploads directory.
+
+        const deletedFile = await prisma.file.delete({
+            where: {
+                id: fileID,
+            }
+        });
+
+        return res.status(200).json({message: 'file deleted Successfully', deletedFile});
+
+    } catch(error){
+        console.error("Failed to delete file:", error);
+        return res.status(500).json({error:'failed to delete file'});
+    }
+};
