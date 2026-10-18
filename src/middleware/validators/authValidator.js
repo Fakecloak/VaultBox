@@ -11,3 +11,16 @@ export const registerValidation = [
         .isLength({min:8})
         .withMessage("password must be 8 character long atleast"),
 ]
+
+
+export const loginValidation = [
+    body('email')
+    .trim()
+    .isEmail()
+    .withMessage('please enter a valid email address.')
+    .normalizeEmail(),
+    body('password')
+        .notEmpty()
+        .isLength({min:8})
+        .withMessage("password must be 8 character long atleast"),
+]

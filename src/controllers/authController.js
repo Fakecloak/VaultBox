@@ -36,3 +36,34 @@ export const registerUser = async (req, res) =>{
         return res.status(500).json({error: 'failed to register user'});
     }
 }
+
+export const loginUser = async (req, res) => {
+    const errors = validationResult(req);
+
+    if(!errors.isEmpty()){
+        return res.status(400).json({errors: errors.array(),})
+        }
+    try{
+        const {email, password} = req.body;
+
+        const user = await prisma.user.findUnique({
+            where:{
+                email,
+            }
+        })
+
+        if(!user){
+            return res.status(401).json({error:"Unauthorized"});
+        }
+
+        const isMatch = await bcrypt.compare(password,user.passwordHash)
+        if(!isMatch){
+            return res.status(401).json({error:"password doesn't match"});
+        }
+
+        return res.status(200).json({message:"login success"})
+    }catch(error){
+        console.error('login failed', error);
+        return res.status(500).json({error: 'failed to login'});
+    }
+}
