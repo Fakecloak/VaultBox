@@ -2,12 +2,14 @@ import express from "express";
 import "dotenv/config";
 import fileRoutes from "./routes/fileRoutes.js";
 import folderRoutes from "./routes/folderRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use("/api/auth",authRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/folders", folderRoutes);
 
