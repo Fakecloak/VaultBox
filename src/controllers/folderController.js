@@ -40,3 +40,38 @@ export const getFolders = async (req, res) => {
         return res.status(500).json({error:'failed to get folders'});
     }
 }
+
+export const deleteFolder = async(req, res) => {
+    try{
+        const folderID = req.params.id;
+        const folder = await prisma.folder.findUnique({
+            where:{
+                id: folderID,
+            },
+            include:{ //to check inside the folder, if its empty or not.
+                files:true,
+                children:true,
+            }
+        })
+        if(!folder){
+            return res.status(404).json({error: "folder not found"});
+        }
+        //check whether its empty
+        if(folder.files.length > 0 || folder.children.length > 0){
+            return res.status(409).json({error: 'folder is not empty'});
+        }
+
+        await prisma.folder.delete({
+            where:{
+                id:folderID,
+            }
+        }
+        )
+
+        return res.status(200).json({message: "folder deleted"});
+
+    } catch(error){
+        console.error("Failed to delete Folder", error);
+        return res.status(500).json({error: "failed to delete folder"});
+    }
+}
