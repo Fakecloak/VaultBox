@@ -1,6 +1,7 @@
 import {prisma} from '../lib/prisma.js';
 import bcrypt from 'bcrypt';
 import { validationResult } from 'express-validator';
+import jwt from 'jsonwebtoken';
 
 export const registerUser = async (req, res) =>{
     const errors = validationResult(req);
@@ -60,8 +61,15 @@ export const loginUser = async (req, res) => {
         if(!isMatch){
             return res.status(401).json({error:"password doesn't match"});
         }
+        
+        const token = jwt.sign(
+            { userId: user.id},
+            process.env.JWT_SECRET,
+            {expiresIn: '1h'});
+        return res.status(200).json({message:"login success",token})
 
-        return res.status(200).json({message:"login success"})
+
+
     }catch(error){
         console.error('login failed', error);
         return res.status(500).json({error: 'failed to login'});
