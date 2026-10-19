@@ -6,7 +6,7 @@ export const getFiles = async (req, res) => {
     try{
         const files = await prisma.file.findMany({
             where: {
-                ownerId: "cmv581r2b0000tgtwl918ug7r",
+                ownerId: req.user.userId,
             }
         });
 
@@ -25,9 +25,10 @@ export const downloadFile = async(req, res) => {
         
         const fileID = req.params.id;
         
-        const file = await prisma.file.findUnique({
+        const file = await prisma.file.findFirst({
             where:{
                 id: fileID,
+                ownerId: req.user.userId
             }
         })
 
@@ -49,9 +50,11 @@ export const deleteFile  = async(req, res) => {
     try{
         const fileID = req.params.id;
 
-        const file  = await prisma.file.findUnique({
+        const file  = await prisma.file.findFirst({
             where: {
                 id: fileID,
+                ownerId: req.user.userId
+
             }
         })
 
@@ -75,3 +78,39 @@ export const deleteFile  = async(req, res) => {
         return res.status(500).json({error:'failed to delete file'});
     }
 };
+
+export const uploadFile = async(req, res) => {
+    try{
+        if(!req.file){
+            return res.status(400).json({error: 'no file uploaded'});
+        }
+
+        const file = await prisma.file.create({
+            data: {
+                filename: req.file.originalname,
+                storageName: req.file.filename,
+                mimeType: req.file.mimetype,
+                size: req.file.size,
+                ownerId: req.user.userId,
+            }
+        });
+        return res.status(201).json({
+            message: 'file uploaded successfully',file,
+        });
+
+    }catch(error){
+        console.error(error, 'file upload failed');
+
+        if(req.file){
+        const filePath =  path.resolve(uploadDir, req.file.filename);
+
+        try{
+            await unlink(filePath);
+        }catch(cleanupError){
+            console.error(cleanupError, 'failed to delete file');
+        }
+        }
+
+        return res.status(500).json({error:'file to upload file'});
+    }
+}

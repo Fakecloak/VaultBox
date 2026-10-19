@@ -8,11 +8,24 @@ export const createFolder = async (req, res) => {
             return res.status(400).json({error: 'folder name is required'});
         } 
 
+        if(parentId){
+            const parentFolder = await prisma.folder.findFirst({
+                where:{
+                    id: parentId, 
+                    ownerId: req.user.userId,
+                }
+            })
+
+            if(!parentFolder){
+            return res.status(404).json({error: 'Parent folder not found'});
+            }
+        }
+
         const folder = await prisma.folder.create({
             data:{
                 name,
                 parentId: parentId || null,
-                ownerId: "cmv581r2b0000tgtwl918ug7r",
+                ownerId: req.user.userId,
             }
         })
         return res.status(201).json({message: 'folder created successfully', folder});
@@ -26,7 +39,7 @@ export const getFolders = async (req, res) => {
     try{
         const folders  = await prisma.folder.findMany({
             where:{
-                ownerId: "cmv581r2b0000tgtwl918ug7r"
+                ownerId: req.user.userId,
             },
             orderBy: {
                 createdAt: "desc"
@@ -44,9 +57,10 @@ export const getFolders = async (req, res) => {
 export const deleteFolder = async(req, res) => {
     try{
         const folderID = req.params.id;
-        const folder = await prisma.folder.findUnique({
+        const folder = await prisma.folder.findFirst({
             where:{
                 id: folderID,
+                ownerId: req.user.userId
             },
             include:{ //to check inside the folder, if its empty or not.
                 files:true,
