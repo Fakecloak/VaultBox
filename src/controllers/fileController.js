@@ -4,9 +4,15 @@ import { unlink } from 'node:fs/promises';
 
 export const getFiles = async (req, res) => {
     try{
+        const {folderId} = req.query;
+
         const files = await prisma.file.findMany({
             where: {
                 ownerId: req.user.userId,
+                folderId: folderId || null,
+            },
+            orderBy: {
+                createdAt: 'desc',
             }
         });
 
@@ -85,6 +91,21 @@ export const uploadFile = async(req, res) => {
             return res.status(400).json({error: 'no file uploaded'});
         }
 
+        const {folderId} = req.body;
+
+        if(folderId){
+            const folder = await prisma.folder.findFirst({
+                where:{
+                    id: folderId,
+                    ownerId: req.user.userId,
+                },
+            });
+
+            if(!folder){
+                return res.status(404).json({error: 'folder not found'});
+            }
+        }
+        
         const file = await prisma.file.create({
             data: {
                 filename: req.file.originalname,
@@ -92,6 +113,7 @@ export const uploadFile = async(req, res) => {
                 mimeType: req.file.mimetype,
                 size: req.file.size,
                 ownerId: req.user.userId,
+                folderId: req.body.folderId || null,
             }
         });
         return res.status(201).json({
